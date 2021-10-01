@@ -1,5 +1,5 @@
 # Ultroid - UserBot
-# Copyright (C) 2020 TeamUltroid
+# Copyright (C) 2021 TeamUltroid
 #
 # This file is a part of < https://github.com/TeamUltroid/Ultroid/ >
 # PLease read the GNU Affero General Public License in
@@ -27,16 +27,13 @@ from . import *
 @ultroid_cmd(pattern="addclean$", admins_only=True)
 async def _(e):
     add_clean(e.chat_id)
-    await eod(e, "Added Clean Action Setting For this Chat")
-    async for x in ultroid_bot.iter_messages(e.chat_id, limit=3000):
-        if x.action:
-            await x.delete()
+    await eor(e, "Added Clean Action Setting For this Chat", time=5)
 
 
 @ultroid_cmd(pattern="remclean$")
 async def _(e):
     rem_clean(e.chat_id)
-    await eod(e, "Removed Clean Action Setting For this Chat")
+    await eor(e, "Removed Clean Action Setting For this Chat", time=5)
 
 
 @ultroid_cmd(pattern="listclean$")
@@ -47,22 +44,10 @@ async def _(e):
         o = ""
         for x in k:
             try:
-                title = (await ultroid_bot.get_entity(int(x))).title
+                title = e.chat.title
             except BaseException:
                 title = "`Invalid ID`"
             o += x + " " + title + "\n"
         await eor(e, o)
     else:
-        await eod(e, "`No Chat Added`")
-
-
-@ultroid_bot.on(events.ChatAction())
-async def _(event):
-    if is_clean_added(event.chat_id):
-        try:
-            await event.delete()
-        except BaseException:
-            pass
-
-
-HELP.update({f"{__name__.split('.')[1]}": f"{__doc__.format(i=HNDLR)}"})
+        await eor(e, "`No Chat Added`", time=5)

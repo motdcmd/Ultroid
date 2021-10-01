@@ -1,5 +1,5 @@
 # Ultroid - UserBot
-# Copyright (C) 2020 TeamUltroid
+# Copyright (C) 2021 TeamUltroid
 #
 # This file is a part of < https://github.com/TeamUltroid/Ultroid/ >
 # PLease read the GNU Affero General Public License in
@@ -7,9 +7,10 @@
 
 from datetime import datetime
 
+from pytz import timezone as tz
 from pyUltroid.functions.asst_fns import *
-from pyUltroid.misc._decorators import sed
-from telethon import Button, events
+from pyUltroid.misc import owner_and_sudos
+from telethon import events
 from telethon.utils import get_display_name
 
 from plugins import *
@@ -17,29 +18,66 @@ from plugins import *
 from . import *
 
 Owner_info_msg = f"""
-**Owner** - {OWNER_NAME}
-**OwnerID** - `{OWNER_ID}`
+<strong>Owner</strong> - {OWNER_NAME}
+<strong>OwnerID</strong> - <code>{OWNER_ID}</code>
 
-**Message Forwards** - {udB.get("PMBOT")}
+<strong>Message Forwards</strong> - {udB.get("PMBOT")}
 
-__Ultroid {ultroid_version}, powered by @TeamUltroid__
+<strong>Ultroid <a href=https://github.com/TeamUltroid/Ultroid>[v{ultroid_version}]</a>, powered by @TeamUltroid</strong>
 """
 
+_settings = [
+    [
+        Button.inline("API Kᴇʏs", data="apiset"),
+        Button.inline("Pᴍ Bᴏᴛ", data="chatbot"),
+    ],
+    [
+        Button.inline("Aʟɪᴠᴇ", data="alvcstm"),
+        Button.inline("PᴍPᴇʀᴍɪᴛ", data="ppmset"),
+    ],
+    [
+        Button.inline("Fᴇᴀᴛᴜʀᴇs", data="otvars"),
+        Button.inline("VC Sᴏɴɢ Bᴏᴛ", data="vcb"),
+    ],
+    [Button.inline("« Bᴀᴄᴋ", data="mainmenu")],
+]
 
-@asst_cmd("start")
-async def assistant(event):
-    if event.is_group and event.sender_id in sed:
-        bnn = (await asst.get_me()).username
-        return await event.reply(
-            "`I dont work in groups`",
-            buttons=[Button.url("⚙️Sᴛᴀʀᴛ⚙️", url=f"https://t.me/{bnn}?start=set")],
-        )
-    else:
-        if not is_added(event.sender_id) and event.sender_id not in sed:
-            add_user(event.sender_id)
+_start = [
+    [
+        Button.inline("Lᴀɴɢᴜᴀɢᴇ 🌐", data="lang"),
+        Button.inline("Sᴇᴛᴛɪɴɢs ⚙️", data="setter"),
+    ],
+    [
+        Button.inline("Sᴛᴀᴛs ✨", data="stat"),
+        Button.inline("Bʀᴏᴀᴅᴄᴀsᴛ 📻", data="bcast"),
+    ],
+    [Button.inline("TɪᴍᴇZᴏɴᴇ 🌎", data="tz")],
+]
+
+
+@callback("ownerinfo")
+async def own(event):
+    await event.edit(
+        Owner_info_msg,
+        buttons=[Button.inline("Close", data="closeit")],
+        link_preview=False,
+        parse_mode="html",
+    )
+
+
+@callback("closeit")
+async def closet(lol):
+    await lol.delete()
+
+
+@asst_cmd("start ?(.*)")
+async def ultroid(event):
+    if event.is_group:
+        return
+    if not is_added(event.sender_id) and str(event.sender_id) not in owner_and_sudos():
+        add_user(event.sender_id)
+    if str(event.sender_id) not in owner_and_sudos():
         ok = ""
-        if event.is_private and event.sender_id in sed:
-            return
         u = await event.client.get_entity(event.chat_id)
         if not udB.get("STARTMSG"):
             if udB.get("PMBOT") == "True":
@@ -55,45 +93,20 @@ async def assistant(event):
                 Redis("STARTMSG").format(me=me, mention=mention),
                 buttons=[Button.inline("Info.", data="ownerinfo")],
             )
+    else:
+        name = get_display_name(event.sender_id)
+        if event.pattern_match.group(1) == "set":
+            await event.reply(
+                "Choose from the below options -",
+                buttons=_settings,
+            )
+        else:
+            await event.reply(
+                get_string("ast_3").format(name),
+                buttons=_start,
+            )
 
 
-@callback("ownerinfo")
-async def own(event):
-    await event.edit(Owner_info_msg, buttons=[Button.inline("Close", data="closeit")])
-
-
-@callback("closeit")
-async def closet(lol):
-    await lol.delete()
-
-
-@asst_cmd("start ?(.*)")
-@owner
-async def ultroid(event):
-    if event.pattern_match.group(1):
-        return
-    if event.is_group:
-        return
-    name = event.sender.first_name
-    if event.sender.last_name:
-        name += f" {event.sender.last_name}"
-    await asst.send_message(
-        event.chat_id,
-        get_string("ast_3").format(name),
-        buttons=[
-            [
-                Button.inline("Language 🌐", data="lang"),
-                Button.inline("Sᴇᴛᴛɪɴɢs ⚙️", data="setter"),
-            ],
-            [
-                Button.inline("Sᴛᴀᴛs ✨", data="stat"),
-                Button.inline("Bʀᴏᴀᴅᴄᴀsᴛ 📻", data="bcast"),
-            ],
-        ],
-    )
-
-
-# aah, repeat the codes..
 @callback("mainmenu")
 @owner
 async def ultroid(event):
@@ -101,16 +114,7 @@ async def ultroid(event):
         return
     await event.edit(
         get_string("ast_3").format(OWNER_NAME),
-        buttons=[
-            [
-                Button.inline("Language 🌐", data="lang"),
-                Button.inline("Sᴇᴛᴛɪɴɢs ⚙️", data="setter"),
-            ],
-            [
-                Button.inline("Sᴛᴀᴛs ✨", data="stat"),
-                Button.inline("Bʀᴏᴀᴅᴄᴀsᴛ 📻", data="bcast"),
-            ],
-        ],
+        buttons=_start,
     )
 
 
@@ -139,26 +143,25 @@ async def bdcast(event):
         themssg = response.message.message
         if themssg == "/cancel":
             return await conv.send_message("Cancelled!!")
-        else:
-            success = 0
-            fail = 0
-            await conv.send_message(f"Starting a broadcast to {len(ok)} users...")
-            start = datetime.now()
-            for i in ok:
-                try:
-                    await asst.send_message(int(i), f"{themssg}")
-                    success += 1
-                except BaseException:
-                    fail += 1
-            end = datetime.now()
-            time_taken = (end - start).seconds
-            await conv.send_message(
-                f"""
+        success = 0
+        fail = 0
+        await conv.send_message(f"Starting a broadcast to {len(ok)} users...")
+        start = datetime.now()
+        for i in ok:
+            try:
+                await asst.send_message(int(i), f"{themssg}")
+                success += 1
+            except BaseException:
+                fail += 1
+        end = datetime.now()
+        time_taken = (end - start).seconds
+        await conv.send_message(
+            f"""
 Broadcast completed in {time_taken} seconds.
 Total Users in Bot - {len(ok)}
 Sent to {success} users.
 Failed for {fail} user(s).""",
-            )
+        )
 
 
 @callback("setter")
@@ -166,38 +169,38 @@ Failed for {fail} user(s).""",
 async def setting(event):
     await event.edit(
         "Choose from the below options -",
-        buttons=[
-            [
-                Button.inline("API Kᴇʏs", data="apiset"),
-                Button.inline("Pᴍ Bᴏᴛ", data="chatbot"),
-            ],
-            [
-                Button.inline("Aʟɪᴠᴇ", data="alvcstm"),
-                Button.inline("PᴍPᴇʀᴍɪᴛ", data="ppmset"),
-            ],
-            [Button.inline("Fᴇᴀᴛᴜʀᴇs", data="otvars")],
-            [Button.inline("VC Sᴏɴɢ Bᴏᴛ", data="vcb")],
-            [Button.inline("« Bᴀᴄᴋ", data="mainmenu")],
-        ],
+        buttons=_settings,
     )
 
 
-@asst_cmd("start set")
+@callback("tz")
 @owner
-async def set(event):
-    await event.reply(
-        "Choose from the below options -",
-        buttons=[
-            [
-                Button.inline("API Kᴇʏs", data="apiset"),
-                Button.inline("Pᴍ Bᴏᴛ", data="chatbot"),
-            ],
-            [
-                Button.inline("Aʟɪᴠᴇ", data="alvcstm"),
-                Button.inline("PᴍPᴇʀᴍɪᴛ", data="ppmset"),
-            ],
-            [Button.inline("Fᴇᴀᴛᴜʀᴇs", data="otvars")],
-            [Button.inline("VC Sᴏɴɢ Bᴏᴛ", data="vcb")],
-            [Button.inline("« Bᴀᴄᴋ", data="mainmenu")],
-        ],
-    )
+async def timezone_(event):
+    await event.delete()
+    pru = event.sender_id
+    var = "TIMEZONE"
+    name = "Timezone"
+    async with event.client.conversation(pru) as conv:
+        await conv.send_message(
+            "Send Your TimeZone From This List [Check From Here](http://www.timezoneconverter.com/cgi-bin/findzone.tzc)"
+        )
+        response = conv.wait_event(events.NewMessage(chats=pru))
+        response = await response
+        themssg = response.message.message
+        if themssg == "/cancel":
+            return await conv.send_message(
+                "Cancelled!!",
+                buttons=get_back_button("mainmenu"),
+            )
+        try:
+            tz(themssg)
+            await setit(event, var, themssg)
+            await conv.send_message(
+                f"{name} changed to {themssg}\n",
+                buttons=get_back_button("mainmenu"),
+            )
+        except BaseException:
+            await conv.send_message(
+                "Wrong TimeZone, Try again",
+                buttons=get_back_button("mainmenu"),
+            )

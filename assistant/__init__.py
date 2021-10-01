@@ -1,5 +1,5 @@
 # Ultroid - UserBot
-# Copyright (C) 2020 TeamUltroid
+# Copyright (C) 2021 TeamUltroid
 #
 # This file is a part of < https://github.com/TeamUltroid/Ultroid/ >
 # PLease read the GNU Affero General Public License in
@@ -24,5 +24,4 @@ async def setit(event, name, value):
 
 
 def get_back_button(name):
-    button = [Button.inline("« Bᴀᴄᴋ", data=f"{name}")]
-    return button
+    return [Button.inline("« Bᴀᴄᴋ", data=f"{name}")]

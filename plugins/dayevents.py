@@ -1,5 +1,5 @@
 # Ultroid - UserBot
-# Copyright (C) 2020 TeamUltroid
+# Copyright (C) 2021 TeamUltroid
 #
 # This file is a part of < https://github.com/TeamUltroid/Ultroid/ >
 # PLease read the GNU Affero General Public License in
@@ -26,12 +26,12 @@ async def diela(e):
     match = e.pattern_match.group(1)
     m = await eor(e, "`Processing... `")
     li = "https://daysoftheyear.com"
-    te = "♻️ **Events of the Day**\n\n"
+    te = "🎊 **Events of the Day**\n\n"
     if match:
         date = match.split("/")[0]
         month = match.split("/")[1]
         li += "/days/2021/" + month + "/" + date
-        te = f"♻️ **Events for {match}/2021**\n\n"
+        te = f"• **Events for {match}/2021**\n\n"
     else:
         da = dr.today().strftime("%F").split("-")
         li += "/days/2021/" + da[1] + "/" + da[2]
@@ -41,6 +41,3 @@ async def diela(e):
     for eve in ml[:5]:
         te += "• " + f'[{eve.text}]({eve["href"]})\n'
     await m.edit(te, link_preview=False)
-
-
-HELP.update({f"{__name__.split('.')[1]}": f"{__doc__.format(i=HNDLR)}"})

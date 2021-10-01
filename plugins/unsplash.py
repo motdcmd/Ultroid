@@ -1,10 +1,9 @@
 # Ultroid - UserBot
-# Copyright (C) 2020 TeamUltroid
+# Copyright (C) 2021 TeamUltroid
 #
 # This file is a part of < https://github.com/TeamUltroid/Ultroid/ >
 # PLease read the GNU Affero General Public License in
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
-
 """
 ✘ Commands Available -
 
@@ -12,9 +11,6 @@
     Unsplash Image Search.
 
 """
-
-
-import urllib
 
 import requests as r
 from bs4 import BeautifulSoup as bs
@@ -36,7 +32,7 @@ async def searchunsl(ult):
     tep = await eor(ult, "`Processing... `")
     res = autopicsearch(query)
     if len(res) == 0:
-        return await eod(ult, "No Results Found !")
+        return await eor(ult, "No Results Found !", time=5)
     qas = res[:num]
     dir = "resources/downloads"
     CL = []
@@ -45,15 +41,10 @@ async def searchunsl(ult):
         li = "https://unsplash.com" + rp["href"]
         ct = r.get(li).content
         bst = bs(ct, "html.parser", from_encoding="utf-8")
-        ft = bst.find_all("img", "_2UpQX")[0]["src"]
+        ft = bst.find_all("img", "oCCRx")[0]["src"]
         Hp = dir + "img" + f"{nl}.png"
-        urllib.request.urlretrieve(ft, Hp)
+        await download_file(ft, Hp)
         CL.append(Hp)
         nl += 1
-    await bot.send_file(
-        ult.chat_id, CL, caption=f"Uploaded {len(qas)} Images\n", album=True
-    )
+    await ult.client.send_file(ult.chat_id, CL, caption=f"Uploaded {len(qas)} Images\n")
     await tep.delete()
-
-
-HELP.update({f"{__name__.split('.')[1]}": f"{__doc__.format(i=HNDLR)}"})

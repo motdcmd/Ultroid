@@ -1,5 +1,5 @@
 # Ultroid - UserBot
-# Copyright (C) 2020 TeamUltroid
+# Copyright (C) 2021 TeamUltroid
 #
 # This file is a part of < https://github.com/TeamUltroid/Ultroid/ >
 # PLease read the GNU Affero General Public License in
@@ -10,19 +10,20 @@ import time
 from datetime import datetime
 from math import ceil
 from os import remove
-from platform import python_version as PyVer
 
 from git import Repo
-from pyUltroid import __version__ as UltVer
+from pyUltroid.dB.core import *
+from pyUltroid.misc import owner_and_sudos
 from support import *
-from telethon import Button, __version__
-from telethon.tl.types import InputWebDocument
+from telethon.tl.types import InputBotInlineResult, InputWebDocument
 
 from . import *
+from ._help import _main_help_menu
 
 # ================================================#
 notmine = f"This bot is for {OWNER_NAME}"
-ULTROID_PIC = "https://telegra.ph/file/115f149ed8e154641708b.jpg"
+
+TLINK = "https://telegra.ph/file/d9c9bc13647fa1d96e764.jpg"
 helps = get_string("inline_1")
 
 add_ons = udB.get("ADDONS")
@@ -30,49 +31,57 @@ if add_ons == "True" or add_ons is None:
     zhelps = get_string("inline_2")
 else:
     zhelps = get_string("inline_3")
-if udB.get("INLINE_PIC"):
-    _file_to_replace = udB.get("INLINE_PIC")
+
+C_PIC = udB.get("INLINE_PIC")
+
+if C_PIC:
+    _file_to_replace = C_PIC
+    TLINK = C_PIC
 else:
     _file_to_replace = "resources/extras/inline.jpg"
+
+upage = 0
 # ============================================#
 
 
-@in_pattern("")
-@in_owner
-async def e(o):
-    if len(o.text) == 0:
-        b = o.builder
-        uptime = grt(time.time() - start_time)
-        header = udB.get("ALIVE_TEXT") if udB.get("ALIVE_TEXT") else "Hey,  I am alive."
-        ALIVEMSG = get_string("alive_1").format(
-            header,
-            OWNER_NAME,
-            ultroid_version,
-            UltVer,
-            uptime,
-            PyVer(),
-            __version__,
-            Repo().active_branch,
-        )
-        res = [
-            await b.article(
-                title="Ultroid Userbot",
-                url="https://t.me/TeamUltroid",
-                description="Userbot | Telethon ",
-                text=ALIVEMSG,
-                thumb=InputWebDocument(ULTROID_PIC, 0, "image/jpeg", []),
-                buttons=[
-                    [Button.url(text="Support Group", url="t.me/UltroidSupport")],
-                    [
-                        Button.url(
-                            text="Repo",
-                            url="https://github.com/Teamultroid/Ultroid",
-                        ),
-                    ],
-                ],
+# --------------------BUTTONS--------------------#
+
+SUP_BUTTONS = [
+    [
+        Button.url("• Repo •", url="https://github.com/TeamUltroid/Ultroid"),
+        Button.url("• Support •", url="t.me/UltroidSupport"),
+    ],
+]
+
+# --------------------BUTTONS--------------------#
+
+
+@inline
+async def inline_alive(o):
+    if o.text or not str(o.sender_id) in owner_and_sudos():
+        return
+    b = o.builder
+    MSG = "• **Ultroid Userbot •**"
+    WEB0 = InputWebDocument(
+        "https://telegra.ph/file/55dd0f381c70e72557cb1.jpg", 0, "image/jpg", []
+    )
+    RES = [
+        InputBotInlineResult(
+            str(o.id),
+            "photo",
+            send_message=await b._message(
+                text=MSG,
+                media=True,
+                buttons=SUP_BUTTONS,
             ),
-        ]
-        await o.answer(res, switch_pm=f"👥 ULTROID PORTAL", switch_pm_param="start")
+            title="Ultroid Userbot",
+            description="Userbot | Telethon",
+            url=TLINK,
+            thumb=WEB0,
+            content=InputWebDocument(TLINK, 0, "image/jpg", []),
+        )
+    ]
+    await o.answer(RES, switch_pm="👥 ULTROID PORTAL", switch_pm_param="start")
 
 
 @in_pattern("ultd")
@@ -82,8 +91,6 @@ async def inline_handler(event):
     for x in LIST.values():
         for y in x:
             z.append(y)
-    cmd = len(z)
-    bnn = asst.me.username
     result = event.builder.photo(
         file=_file_to_replace,
         link_preview=False,
@@ -91,38 +98,26 @@ async def inline_handler(event):
             OWNER_NAME,
             len(PLUGINS),
             len(ADDONS),
-            cmd,
+            len(z),
         ),
-        buttons=[
-            [
-                Button.inline("• Pʟᴜɢɪɴs", data="hrrrr"),
-                Button.inline("• Aᴅᴅᴏɴs", data="frrr"),
-            ],
-            [
-                Button.inline("Oᴡɴᴇʀ•ᴛᴏᴏʟꜱ", data="ownr"),
-                Button.inline("Iɴʟɪɴᴇ•Pʟᴜɢɪɴs", data="inlone"),
-            ],
-            [
-                Button.url("⚙️Sᴇᴛᴛɪɴɢs⚙️", url=f"https://t.me/{bnn}?start=set"),
-            ],
-            [Button.inline("••Cʟᴏꜱᴇ••", data="close")],
-        ],
+        buttons=_main_help_menu,
     )
-    await event.answer([result])
+    await event.answer([result], gallery=True)
 
 
-@in_pattern("paste")
+@in_pattern("pasta")
 @in_owner
 async def _(event):
-    ok = event.text.split(" ")[1]
-    link = "https://nekobin.com/"
-    result = event.builder.article(
+    ok = event.text.split("-")[1]
+    link = "https://spaceb.in/" + ok
+    raw = f"https://spaceb.in/api/v1/documents/{ok}/raw"
+    result = await event.builder.article(
         title="Paste",
-        text="Pᴀsᴛᴇᴅ Tᴏ Nᴇᴋᴏʙɪɴ!",
+        text="Pasted to Spacebin 🌌",
         buttons=[
             [
-                Button.url("NekoBin", url=f"{link}{ok}"),
-                Button.url("Raw", url=f"{link}raw/{ok}"),
+                Button.url("SpaceBin", url=link),
+                Button.url("Raw", url=raw),
             ],
         ],
     )
@@ -160,23 +155,35 @@ async def setting(event):
     )
 
 
+@callback("vc_helper")
+@owner
+async def on_vc_callback_query_handler(event):
+    xhelps = "**Voice Chat Help Menu for {}**\n**Available Commands:** `{}`\n\n@TeamUltroid".format(
+        OWNER_NAME, len(VC_HELP)
+    )
+    try:
+        buttons = page_num(0, VC_HELP, "vchelp", "vc")
+    except ZeroDivisionError:
+        return await event.answer("Vc not Active.")
+    await event.edit(f"{xhelps}", buttons=buttons, link_preview=False)
+
+
 @callback("doupdate")
 @owner
 async def _(event):
-    check = await updater()
+    check = updater()
     if not check:
         return await event.answer(
             "You Are Already On Latest Version", cache_time=0, alert=True
         )
     repo = Repo.init()
     ac_br = repo.active_branch
-    changelog, tl_chnglog = await gen_chlog(repo, f"HEAD..upstream/{ac_br}")
-    changelog_str = changelog + f"\n\nClick the below button to update!"
+    changelog, tl_chnglog = gen_chlog(repo, f"HEAD..upstream/{ac_br}")
+    changelog_str = changelog + "\n\nClick the below button to update!"
     if len(changelog_str) > 1024:
         await event.edit(get_string("upd_4"))
-        file = open(f"ultroid_updates.txt", "w+")
-        file.write(tl_chnglog)
-        file.close()
+        with open("ultroid_updates.txt", "w+") as file:
+            file.write(tl_chnglog)
         await event.edit(
             get_string("upd_5"),
             file="ultroid_updates.txt",
@@ -185,8 +192,7 @@ async def _(event):
                 [Button.inline("« Bᴀᴄᴋ", data="ownr")],
             ],
         )
-        remove(f"ultroid_updates.txt")
-        return
+        remove("ultroid_updates.txt")
     else:
         await event.edit(
             changelog_str,
@@ -202,14 +208,14 @@ async def _(event):
 async def _(event):
     start = datetime.now()
     end = datetime.now()
-    ms = (end - start).microseconds / 1000
-    pin = f"🌋Pɪɴɢ = {ms}ms"
+    ms = (end - start).microseconds
+    pin = f"🌋Pɪɴɢ = {ms} microseconds"
     await event.answer(pin, cache_time=0, alert=True)
 
 
 @callback("upp")
 async def _(event):
-    uptime = grt(time.time() - start_time)
+    uptime = time_formatter((time.time() - start_time) * 1000)
     pin = f"🙋Uᴘᴛɪᴍᴇ = {uptime}"
     await event.answer(pin, cache_time=0, alert=True)
 
@@ -256,8 +262,8 @@ async def _(e):
         ],
         [
             Button.switch_inline(
-                "CʟɪᴘAʀᴛ Sᴇᴀʀᴄʜ",
-                query="clipart frog",
+                "Piston Eval",
+                query="run javascript console.log('Hello Ultroid')",
                 same_peer=True,
             ),
             Button.switch_inline(
@@ -266,6 +272,7 @@ async def _(e):
                 same_peer=True,
             ),
         ],
+        [Button.switch_inline("xda Search", query="xda telegram", same_peer=True)],
         [
             Button.inline(
                 "« Bᴀᴄᴋ",
@@ -331,6 +338,30 @@ async def on_plug_in_callback_query_handler(event):
 
 @callback(
     re.compile(
+        rb"vchelp_next\((.+?)\)",
+    ),
+)
+@owner
+async def on_vc_callback_query_handler(event):
+    current_page_number = int(event.data_match.group(1).decode("UTF-8"))
+    buttons = page_num(current_page_number + 1, VC_HELP, "vchelp", "vc")
+    await event.edit(buttons=buttons, link_preview=False)
+
+
+@callback(
+    re.compile(
+        rb"vchelp_prev\((.+?)\)",
+    ),
+)
+@owner
+async def on_vc_callback_query_handler(event):
+    current_page_number = int(event.data_match.group(1).decode("UTF-8"))
+    buttons = page_num(current_page_number - 1, VC_HELP, "vchelp", "vc")
+    await event.edit(buttons=buttons, link_preview=False)
+
+
+@callback(
+    re.compile(
         rb"addon_next\((.+?)\)",
     ),
 )
@@ -381,40 +412,37 @@ async def backr(event):
     )
 
 
+@callback("bvck")
+@owner
+async def bvckr(event):
+    xhelps = "**Voice Chat Help Menu for {}**\n**Available Commands:** `{}`\n\n@TeamUltroid".format(
+        OWNER_NAME, len(VC_HELP)
+    )
+    current_page_number = int(upage)
+    buttons = page_num(current_page_number, VC_HELP, "vchelp", "vc")
+    await event.edit(
+        f"{xhelps}",
+        file=_file_to_replace,
+        buttons=buttons,
+        link_preview=False,
+    )
+
+
 @callback("open")
 @owner
 async def opner(event):
-    bnn = asst.me.username
-    buttons = [
-        [
-            Button.inline("• Pʟᴜɢɪɴs ", data="hrrrr"),
-            Button.inline("• Aᴅᴅᴏɴs", data="frrr"),
-        ],
-        [
-            Button.inline("Oᴡɴᴇʀ•Tᴏᴏʟꜱ", data="ownr"),
-            Button.inline("Iɴʟɪɴᴇ•Pʟᴜɢɪɴs", data="inlone"),
-        ],
-        [
-            Button.url(
-                "⚙️Sᴇᴛᴛɪɴɢs⚙️",
-                url=f"https://t.me/{bnn}?start={ultroid_bot.me.id}",
-            ),
-        ],
-        [Button.inline("••Cʟᴏꜱᴇ••", data="close")],
-    ]
     z = []
     for x in LIST.values():
         for y in x:
             z.append(y)
-    cmd = len(z) + 10
     await event.edit(
         get_string("inline_4").format(
             OWNER_NAME,
             len(PLUGINS),
             len(ADDONS),
-            cmd,
+            len(z),
         ),
-        buttons=buttons,
+        buttons=_main_help_menu,
         link_preview=False,
     )
 
@@ -425,7 +453,7 @@ async def on_plug_in_callback_query_handler(event):
     await event.edit(
         get_string("inline_5"),
         file=_file_to_replace,
-        buttons=Button.inline("Oᴘᴇɴ Mᴀɪɴ Mᴇɴᴜ Aɢᴀɪɴ", data="open"),
+        buttons=Button.inline("Oᴘᴇɴ Aɢᴀɪɴ", data="open"),
     )
 
 
@@ -461,7 +489,52 @@ async def on_plug_in_callback_query_handler(event):
         ],
     ]
     try:
-        if event.query.user_id in sed:
+        if str(event.query.user_id) in owner_and_sudos():
+            await event.edit(
+                reply_pop_up_alert,
+                buttons=buttons,
+            )
+        else:
+            reply_pop_up_alert = notmine
+            await event.answer(reply_pop_up_alert, cache_time=0)
+    except BaseException:
+        halps = f"Do .help {plugin_name} to get the list of commands."
+        await event.edit(halps, buttons=buttons)
+
+
+@callback(
+    re.compile(
+        b"vc_plugin_(.*)",
+    ),
+)
+@owner
+async def on_vc_plg_callback_query_handler(event):
+    plugin_name = event.data_match.group(1).decode("UTF-8")
+    help_string = f"Plugin Name - `{plugin_name}`\n"
+    try:
+        for i in VC_HELP[plugin_name]:
+            help_string += i
+    except BaseException:
+        pass
+    if help_string == "**Commands Available:**\n\n":
+        reply_pop_up_alert = f"{plugin_name} has no detailed help..."
+    else:
+        reply_pop_up_alert = help_string
+    reply_pop_up_alert += "\n© @TeamUltroid"
+    buttons = [
+        [
+            Button.inline(
+                "« Sᴇɴᴅ Pʟᴜɢɪɴ »",
+                data=f"sndplug_{(event.data).decode('UTF-8')}",
+            )
+        ],
+        [
+            Button.inline("« Bᴀᴄᴋ", data="bvck"),
+            Button.inline("••Cʟᴏꜱᴇ••", data="close"),
+        ],
+    ]
+    try:
+        if str(event.query.user_id) in owner_and_sudos():
             await event.edit(
                 reply_pop_up_alert,
                 buttons=buttons,
@@ -520,7 +593,7 @@ async def on_plug_in_callback_query_handler(event):
         ],
     ]
     try:
-        if event.query.user_id in sed:
+        if str(event.query.user_id) in owner_and_sudos():
             await event.edit(
                 reply_pop_up_alert,
                 buttons=buttons,
@@ -533,19 +606,14 @@ async def on_plug_in_callback_query_handler(event):
         await event.edit(halps, buttons=buttons)
 
 
-def page_num(page_number, loaded_plugins, prefix, type):
+def page_num(page_number, loaded_plugins, prefix, type_):
     number_of_rows = 5
     number_of_cols = 2
     emoji = Redis("EMOJI_IN_HELP")
-    if emoji:
-        multi = emoji
-    else:
-        multi = "✘"
-    helpable_plugins = []
+    multi = emoji or "✘"
     global upage
     upage = page_number
-    for p in loaded_plugins:
-        helpable_plugins.append(p)
+    helpable_plugins = [p for p in loaded_plugins]
     helpable_plugins = sorted(helpable_plugins)
     modules = [
         Button.inline(
@@ -554,7 +622,7 @@ def page_num(page_number, loaded_plugins, prefix, type):
                 x,
                 multi,
             ),
-            data=f"{type}_plugin_{x}",
+            data=f"{type_}_plugin_{x}",
         )
         for x in helpable_plugins
     ]

@@ -1,10 +1,9 @@
 # Ultroid - UserBot
-# Copyright (C) 2020 TeamUltroid
+# Copyright (C) 2021 TeamUltroid
 #
 # This file is a part of < https://github.com/TeamUltroid/Ultroid/ >
 # PLease read the GNU Affero General Public License in
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
-
 """
 ✘ Commands Available -
 
@@ -18,13 +17,13 @@
 • `{i}reverse <query>`
     Reply an Image or sticker to find its sauce.
 """
-
 import os
 from shutil import rmtree
 
 import requests
 from bs4 import BeautifulSoup as bs
 from PIL import Image
+from pyUltroid.functions.google_image import googleimagesdownload
 from search_engine_parser import GoogleSearch
 from search_engine_parser.core.exceptions import NoResultsOrTrafficError as GoglError
 
@@ -33,7 +32,10 @@ from strings import get_string
 from . import *
 
 
-@ultroid_cmd(pattern="google ?(.*)")
+@ultroid_cmd(
+    pattern="google ?(.*)",
+    type=["official", "manager"],
+)
 async def google(event):
     inp = event.pattern_match.group(1)
     if not inp:
@@ -45,17 +47,18 @@ async def google(event):
     except GoglError as e:
         return await eor(event, str(e))
     out = ""
-    for i in range(len(res["links"])):
-        text = res["titles"][i]
-        url = res["links"][i]
-        des = res["descriptions"][i]
-        out += f" 👉🏻  [{text}]({url})\n`{des}`\n\n"
+    try:
+        for i in range(len(res["links"])):
+            text = res["titles"][i]
+            url = res["links"][i]
+            des = res["descriptions"][i]
+            out += f" 👉🏻  [{text}]({url})\n`{des}`\n\n"
+    except TypeError:
+        return await eor(event, f"`Can't find anything about {inp}`", time=5)
     omk = f"**Google Search Query:**\n`{inp}`\n\n**Results:**\n{out}"
-    opn = []
-    for bkl in range(0, len(omk), 4095):
-        opn.append(omk[bkl : bkl + 4095])
+    opn = [omk[bkl : bkl + 4095] for bkl in range(0, len(omk), 4095)]
     for bc in opn:
-        await ultroid_bot.send_message(event.chat_id, bc, link_preview=False)
+        await event.respond(bc, link_preview=False)
     await x.delete()
     opn.clear()
 
@@ -66,24 +69,26 @@ async def goimg(event):
     if not query:
         return await eor(event, "`Give something to search...`")
     nn = await eor(event, "`Processing Keep Patience...`")
+    lmt = 5
     if ";" in query:
         try:
             lmt = int(query.split(";")[1])
             query = query.split(";")[0]
-        except BaseExceptaion:
-            lmt = 5
-    else:
-        lmt = 5
-    gi = googleimagesdownload()
-    args = {
-        "keywords": query,
-        "limit": lmt,
-        "format": "jpg",
-        "output_directory": "./resources/downloads/",
-    }
-    pth = gi.download(args)
-    ok = pth[0][query]
-    await event.client.send_file(event.chat_id, ok, caption=query, album=True)
+        except BaseException:
+            pass
+    try:
+        gi = googleimagesdownload()
+        args = {
+            "keywords": query,
+            "limit": lmt,
+            "format": "jpg",
+            "output_directory": "./resources/downloads/",
+        }
+        pth = gi.download(args)
+        ok = pth[0][query]
+    except BaseException:
+        return await nn.edit("No Results Found :(")
+    await event.reply(file=ok, message=query)
     rmtree(f"./resources/downloads/{query}/")
     await nn.delete()
 
@@ -94,7 +99,7 @@ async def reverse(event):
     if not reply:
         return await eor(event, "`Reply to an Image`")
     ult = await eor(event, "`Processing...`")
-    dl = await bot.download_media(reply)
+    dl = await reply.download_media()
     img = Image.open(dl)
     x, y = img.size
     file = {"encoded_image": (dl, open(dl, "rb"))}
@@ -133,6 +138,3 @@ async def reverse(event):
     )
     rmtree(f"./resources/downloads/{text}/")
     os.remove(dl)
-
-
-HELP.update({f"{__name__.split('.')[1]}": f"{__doc__.format(i=HNDLR)}"})

@@ -1,5 +1,5 @@
 # Ultroid - UserBot
-# Copyright (C) 2020 TeamUltroid
+# Copyright (C) 2021 TeamUltroid
 #
 # This file is a part of < https://github.com/TeamUltroid/Ultroid/ >
 # PLease read the GNU Affero General Public License in
@@ -27,15 +27,12 @@ from pyUltroid.functions.blacklist_db import *
 from . import *
 
 
-@ultroid_cmd(pattern="blacklist ?(.*)")
+@ultroid_cmd(pattern="blacklist ?(.*)", admins_only=True)
 async def af(e):
-    if e.is_group:
-        if not e._chat.admin_rights:
-            return await eod(e, "`You are Not Admin Here`")
     wrd = e.pattern_match.group(1)
     chat = e.chat_id
     if not (wrd):
-        return await eod(e, "`Give the word to blacklist..`")
+        return await eor(e, "`Give the word to blacklist..`", time=5)
     wrd = e.text[11:]
     heh = wrd.split(" ")
     for z in heh:
@@ -43,15 +40,12 @@ async def af(e):
     await eor(e, f"Done : `{wrd}` Blacklisted here.")
 
 
-@ultroid_cmd(pattern="remblacklist ?(.*)")
+@ultroid_cmd(pattern="remblacklist ?(.*)", admins_only=True)
 async def rf(e):
-    if e.is_group:
-        if not e._chat.admin_rights:
-            return await eod(e, "`You are Not Admin Here`")
     wrd = e.pattern_match.group(1)
     chat = e.chat_id
     if not wrd:
-        return await eod(e, "`Give the word to remove from blacklist..`")
+        return await eor(e, "`Give the word to remove from blacklist..`", time=5)
     wrd = e.text[14:]
     heh = wrd.split(" ")
     for z in heh:
@@ -59,11 +53,8 @@ async def rf(e):
     await eor(e, f"Done : `{wrd}` Removed from Blacklist.")
 
 
-@ultroid_cmd(pattern="listblacklist")
+@ultroid_cmd(pattern="listblacklist$", admins_only=True)
 async def lsnote(e):
-    if e.is_group:
-        if not e._chat.admin_rights:
-            return await eod(e, "`You are Not Admin Here`")
     x = list_blacklist(e.chat_id)
     if x:
         sd = "Blacklist Found In This Chats Are\n\n"
@@ -74,15 +65,13 @@ async def lsnote(e):
 
 @ultroid_bot.on(events.NewMessage(incoming=True))
 async def bl(e):
-    chat = e.chat_id
-    x = get_blacklist(int(chat))
-    if x and e.text:
-        xx = ((e.text).lower()).split()
-        yy = x.split("$|")
-        for z in xx:
-            if z in yy:
-                await e.delete()
-                break
-
-
-HELP.update({f"{__name__.split('.')[1]}": f"{__doc__.format(i=HNDLR)}"})
+    x = get_blacklist(e.chat_id)
+    if x:
+        for z in e.text.lower().split():
+            for zz in x:
+                if z == zz:
+                    try:
+                        await e.delete()
+                        break
+                    except BaseException:
+                        break

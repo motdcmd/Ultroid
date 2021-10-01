@@ -1,5 +1,5 @@
 # Ultroid - UserBot
-# Copyright (C) 2020 TeamUltroid
+# Copyright (C) 2021 TeamUltroid
 #
 # This file is a part of < https://github.com/TeamUltroid/Ultroid/ >
 # PLease read the GNU Affero General Public License in
@@ -30,26 +30,24 @@ async def _(event):
     try:
         file_name = vv[1]
     except IndexError:
-        pass
-    if event.reply_to_msg_id:
-        bb = await event.get_reply_message()
-        if bb.media:
-            ccc = time.time()
-            try:
-                naam = await downloader(
-                    bb.file.name,
-                    bb.media.document,
-                    xx,
-                    ccc,
-                    "Downloading " + bb.file.name + "...",
-                )
-                file_name = naam.name
-            except BaseException:
-                file_name = await event.client.download_media(bb)
-        else:
-            return await eod(xx, "`Reply to media file`", time=5)
+        return await eor(xx, "`Provide a File Name pls..")
+    bb = await event.get_reply_message()
+    if not (bb and bb.media):
+        return await eor(xx, "`Reply to media file..`")
+    ccc = time.time()
     try:
-        results = await ultroid_bot.inline_query(
+        naam = await downloader(
+            bb.file.name,
+            bb.media.document,
+            xx,
+            ccc,
+            "Downloading " + bb.file.name + "...",
+        )
+        file_name = naam.name
+    except BaseException:
+        file_name = await event.client.download_media(bb)
+    try:
+        results = await event.client.inline_query(
             asst.me.username,
             f"fl2lnk {file_name}",
         )
@@ -68,6 +66,3 @@ async def _(event):
     await results[0].click(event.chat_id, reply_to=event.reply_to_msg_id, hide_via=True)
     await xx.delete()
     await event.delete()
-
-
-HELP.update({f"{__name__.split('.')[1]}": f"{__doc__.format(i=HNDLR)}"})

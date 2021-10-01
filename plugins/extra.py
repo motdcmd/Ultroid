@@ -1,10 +1,9 @@
 # Ultroid - UserBot
-# Copyright (C) 2020 TeamUltroid
+# Copyright (C) 2021 TeamUltroid
 #
 # This file is a part of < https://github.com/TeamUltroid/Ultroid/ >
 # PLease read the GNU Affero General Public License in
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
-
 """
 ✘ Commands Available -
 
@@ -20,7 +19,6 @@
 • `{i}reply`
     Reply the last sent msg to replied user.
 """
-
 import asyncio
 
 from telethon.events import NewMessage as NewMsg
@@ -43,18 +41,17 @@ async def newmsg(event):
 
 @ultroid_cmd(
     pattern="del$",
+    type=["official", "manager"],
 )
 async def delete_it(delme):
     msg_src = await delme.get_reply_message()
-    if delme.reply_to_msg_id:
+    if msg_src:
         try:
             await msg_src.delete()
             await delme.delete()
-        except BaseException:
-            await eod(
-                delme,
-                f"Couldn't delete the message.\n\n**ERROR:**\n`{str(e)}`",
-                time=5,
+        except Exception as e:
+            await eor(
+                delme, f"Couldn't delete the message.\n\n**ERROR:**\n`{str(e)}`", time=5
             )
 
 
@@ -64,14 +61,10 @@ async def delete_it(delme):
 async def copy(e):
     reply = await e.get_reply_message()
     if reply:
-        if reply.text and not reply.media:
-            await eor(e, reply.text)
-        else:
-            await reply.reply(reply)
-            if e.sender_id == ultroid_bot.uid:
-                await e.delete()
+        await reply.reply(reply)
+        await e.delete()
     else:
-        await eod(e, "`Reply To any message`")
+        await eor(e, "`Reply To any message`", time=5)
 
 
 @ultroid_cmd(
@@ -90,12 +83,12 @@ async def editer(edit):
             pass
     else:
         i = 1
-        async for message in ultroid_bot.iter_messages(chat, ultroid_bot.uid):
+        async for message in edit.client.iter_messages(chat, ultroid_bot.uid):
             if i == 2:
                 await message.edit(string)
                 await edit.delete()
                 break
-            i = i + 1
+            i += 1
 
 
 @ultroid_cmd(
@@ -113,6 +106,3 @@ async def _(e):
         )
     else:
         await e.delete()
-
-
-HELP.update({f"{__name__.split('.')[1]}": f"{__doc__.format(i=HNDLR)}"})

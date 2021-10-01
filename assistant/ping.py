@@ -1,5 +1,5 @@
 # Ultroid - UserBot
-# Copyright (C) 2020 TeamUltroid
+# Copyright (C) 2021 TeamUltroid
 #
 # This file is a part of < https://github.com/TeamUltroid/Ultroid/ >
 # PLease read the GNU Affero General Public License in
@@ -8,13 +8,11 @@
 from datetime import datetime
 
 
-@asst_cmd("ping")
+@asst_cmd("ping$")
 @owner
 async def _(event):
     start = datetime.now()
+    msg = await event.reply("Pong!")
     end = datetime.now()
     ms = (end - start).microseconds / 1000
-    await asst.send_message(
-        event.chat_id,
-        f"**Pong!!**\n `{ms}ms`",
-    )
+    await msg.edit(f"**Pong!!**\n `{ms} ms`")
